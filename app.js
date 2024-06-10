@@ -1,34 +1,43 @@
-// Importing required modules
 const express = require('express');
-const multer  = require('multer');
+const multer = require('multer');
+const fs = require('fs');
 const path = require('path');
 
-// Setting up multer for file upload
+const app = express();
+const PORT = 3000;
+
+// Set up multer storage
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname)
-  }
+    destination: function (req, file, cb) {
+        // Check if 'uploads' directory exists, create it if not
+        const uploadDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir);
+        }
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    }
 });
 
+// Initialize multer
 const upload = multer({ storage: storage });
 
-// Initializing express app
-const app = express();
+// Serve static files from the public folder
+app.use(express.static('public'));
 
-// Setting up static folder
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Setting up routes
+// Route for file upload
 app.post('/upload', upload.array('files'), (req, res) => {
-  // Files have been uploaded successfully
-  res.send('Files uploaded successfully!');
+    res.status(200).send('Files uploaded successfully');
 });
 
-// Starting server
-const PORT = process.env.PORT || 3000;
+// Serve the HTML file
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// Start the server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
